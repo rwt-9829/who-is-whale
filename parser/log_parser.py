@@ -114,12 +114,10 @@ def extract_stats(df):
                         flop_aggro = bettor
                     if pfr and bettor == pfr:
                         player_stats[pfr]["cbet_flop"] += 1
+                    else:
+                        player_stats[bettor]["donk_flop"] += 1
             elif "checks" in a and pfr and a.startswith(f'"{pfr}"'):
                 pfr_checked_flop = True
-            elif "bets" in a and not a.startswith(f'"{pfr}"'):
-                m = re.match(r'"(.+?)" bets', a)
-                if m:
-                    player_stats[m.group(1)]["donk_flop"] += 1
             elif "raises" in a:
                 m = re.match(r'"(.+?)" raises', a)
                 if m:
