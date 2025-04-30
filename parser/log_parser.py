@@ -60,11 +60,14 @@ def extract_stats(df):
 
         # Track bets/contributions
         for street_actions in actions.values():
+            cur_contrib = defaultdict(int)
             for line in street_actions:
                 m = re.match(r'"(.+?)" (bets|calls|raises|posts small blind|posts big blind)(.*?)(\d+)', line)
                 if m:
                     name, _, _, amount = m.groups()
-                    contributions[name] = int(amount)
+                    cur_contrib[name] = int(amount)
+            for name, contrib in cur_contrib:
+                contributions[name] += contrib
 
         # PREFLOP stats
         for a in actions["PREFLOP"]:
