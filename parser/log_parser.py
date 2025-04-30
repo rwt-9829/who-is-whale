@@ -1,3 +1,42 @@
+import pandas as pd
+import re
+from collections import defaultdict
+
+def parse_log_file(file_path):
+    df = pd.read_csv(file_path)
+    df = df.sort_values("order")
+    return df
+
+def extract_hands(entries):
+    hands = []
+    current_hand = []
+    inside_hand = False
+    for entry in entries:
+        if entry.startswith("-- starting hand"):
+            current_hand = [entry]
+            inside_hand = True
+        elif entry.startswith("-- ending hand"):
+            current_hand.append(entry)
+            hands.append(current_hand)
+            inside_hand = False
+        elif inside_hand:
+            current_hand.append(entry)
+    return hands
+
+def extract_street_actions(hand):
+    streets = {"PREFLOP": [], "FLOP": [], "TURN": [], "RIVER": []}
+    current_street = "PREFLOP"
+    for entry in hand:
+        if entry.startswith("Flop:"):
+            current_street = "FLOP"
+        elif entry.startswith("Turn:"):
+            current_street = "TURN"
+        elif entry.startswith("River:"):
+            current_street = "RIVER"
+        elif '"' in entry and any(kw in entry for kw in ["bets", "calls", "raises", "folds", "checks", "posts"]):
+            streets[current_street].append(entry)
+    return streets
+
 def extract_stats(df):
     entries = df["entry"].tolist()
     hands = extract_hands(entries)
