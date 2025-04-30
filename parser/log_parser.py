@@ -46,16 +46,25 @@ def extract_stats(df):
         "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
         "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0
     })
-    hand_winnings = []  # Track winnings by hand
+    hand_winnings = []
     bb_size = 100
 
     for hand in hands:
         actions = extract_street_actions(hand)
         players = set()
         pfr = None
-        winnings_this_hand = defaultdict(int)
+        contributions = defaultdict(int)
+        winnings = defaultdict(int)
 
-        # PREFLOP
+        # Track bets from all streets
+        for street_actions in actions.values():
+            for line in street_actions:
+                m = re.match(r'"(.+?)" (bets|calls|raises|posts small blind|posts big blind)(.*?)(\d+)', line)
+                if m:
+                    name, _, _, amount = m.groups()
+                    contributions[name] += int(amount)
+
+        # PREFLOP analysis
         for a in actions["PREFLOP"]:
             m = re.match(r'"(.+?)" (.+)', a)
             if m:
@@ -99,10 +108,16 @@ def extract_stats(df):
                 m = re.match(r'"(.+?)" collected (\d+)', line)
                 if m:
                     name, amount = m.groups()
-                    amount = int(amount)
-                    winnings_this_hand[name] += amount
-                    player_stats[name]["winnings"] += amount
+                    winnings[name] += int(amount)
 
-        hand_winnings.append(winnings_this_hand)
+        net_result = {}
+        for player in set(contributions.keys()).union(winnings.keys()):
+            net = winnings[player] - contributions[player]
+            if net > 0:
+                net = 2 * net
+            player_stats[player]["winnings"] += net
+            net_result[player] = net
+
+        hand_winnings.append(net_result)
 
     return player_stats, hand_winnings
