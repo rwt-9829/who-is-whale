@@ -1,7 +1,7 @@
 # who-is-whale.streamlit.app
 PokerNow.Club Log Analyzer
 
-# stats
+# Features
 ## Cumulative Winnings Over Hands
 Graph with each line representing a player's cumulative winnings.
 ## Player Statistics
