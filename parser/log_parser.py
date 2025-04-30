@@ -40,16 +40,22 @@ def extract_street_actions(hand):
 def extract_stats(df):
     entries = df["entry"].tolist()
     hands = extract_hands(entries)
+
     player_stats = defaultdict(lambda: {
         "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
         "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
         "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0
     })
+    hand_winnings = []  # Track winnings by hand
     bb_size = 100
+
     for hand in hands:
         actions = extract_street_actions(hand)
         players = set()
         pfr = None
+        winnings_this_hand = defaultdict(int)
+
+        # PREFLOP
         for a in actions["PREFLOP"]:
             m = re.match(r'"(.+?)" (.+)', a)
             if m:
@@ -60,10 +66,13 @@ def extract_stats(df):
                 if "raises" in move and pfr is None:
                     pfr = name
                     player_stats[name]["pfr"] += 1
+
         for p in players:
             player_stats[p]["hands"] += 1
         if pfr:
             player_stats[pfr]["preflop_raiser"] += 1
+
+        # FLOP STATS
         for a in actions["FLOP"]:
             if f'"{pfr}" bets' in a:
                 player_stats[pfr]["cbet_flop"] += 1
@@ -83,9 +92,17 @@ def extract_stats(df):
                 m = re.match(r'"(.+?)" ', a)
                 if m and m.group(1) != pfr:
                     player_stats[m.group(1)]["faced_cbet_flop"] += 1
+
+        # WINNINGS
         for line in hand:
             if "collected" in line:
                 m = re.match(r'"(.+?)" collected (\d+)', line)
                 if m:
-                    player_stats[m.group(1)]["winnings"] += int(m.group(2))
-    return player_stats
+                    name, amount = m.groups()
+                    amount = int(amount)
+                    winnings_this_hand[name] += amount
+                    player_stats[name]["winnings"] += amount
+
+        hand_winnings.append(winnings_this_hand)
+
+    return player_stats, hand_winnings
