@@ -64,7 +64,7 @@ def extract_stats(df):
                 m = re.match(r'"(.+?)" (bets|calls|raises|posts small blind|posts big blind)(.*?)(\d+)', line)
                 if m:
                     name, _, _, amount = m.groups()
-                    contributions[name] += int(amount)
+                    contributions[name] = int(amount)
 
         # PREFLOP stats
         for a in actions["PREFLOP"]:
