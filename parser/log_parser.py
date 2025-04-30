@@ -1,0 +1,91 @@
+import pandas as pd
+import re
+from collections import defaultdict
+
+def parse_log_file(file_path):
+    df = pd.read_csv(file_path)
+    df = df.sort_values("order")
+    return df
+
+def extract_hands(entries):
+    hands = []
+    current_hand = []
+    inside_hand = False
+    for entry in entries:
+        if entry.startswith("-- starting hand"):
+            current_hand = [entry]
+            inside_hand = True
+        elif entry.startswith("-- ending hand"):
+            current_hand.append(entry)
+            hands.append(current_hand)
+            inside_hand = False
+        elif inside_hand:
+            current_hand.append(entry)
+    return hands
+
+def extract_street_actions(hand):
+    streets = {"PREFLOP": [], "FLOP": [], "TURN": [], "RIVER": []}
+    current_street = "PREFLOP"
+    for entry in hand:
+        if entry.startswith("Flop:"):
+            current_street = "FLOP"
+        elif entry.startswith("Turn:"):
+            current_street = "TURN"
+        elif entry.startswith("River:"):
+            current_street = "RIVER"
+        elif '"' in entry and any(kw in entry for kw in ["bets", "calls", "raises", "folds", "checks", "posts"]):
+            streets[current_street].append(entry)
+    return streets
+
+def extract_stats(df):
+    entries = df["entry"].tolist()
+    hands = extract_hands(entries)
+    player_stats = defaultdict(lambda: {
+        "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
+        "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
+        "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0
+    })
+    bb_size = 100
+    for hand in hands:
+        actions = extract_street_actions(hand)
+        players = set()
+        pfr = None
+        for a in actions["PREFLOP"]:
+            m = re.match(r'"(.+?)" (.+)', a)
+            if m:
+                name, move = m.groups()
+                players.add(name)
+                if "calls" in move or "raises" in move:
+                    player_stats[name]["vpip"] += 1
+                if "raises" in move and pfr is None:
+                    pfr = name
+                    player_stats[name]["pfr"] += 1
+        for p in players:
+            player_stats[p]["hands"] += 1
+        if pfr:
+            player_stats[pfr]["preflop_raiser"] += 1
+        for a in actions["FLOP"]:
+            if f'"{pfr}" bets' in a:
+                player_stats[pfr]["cbet_flop"] += 1
+            if "bets" in a and not a.startswith(f'"{pfr}"'):
+                m = re.match(r'"(.+?)" bets', a)
+                if m:
+                    player_stats[m.group(1)]["donk_flop"] += 1
+            if "folds" in a:
+                m = re.match(r'"(.+?)" folds', a)
+                if m:
+                    player_stats[m.group(1)]["fold_to_cbet_flop"] += 1
+            if "raises" in a:
+                m = re.match(r'"(.+?)" raises', a)
+                if m:
+                    player_stats[m.group(1)]["x_r_flop"] += 1
+            if any(x in a for x in ["bets", "calls", "folds"]):
+                m = re.match(r'"(.+?)" ', a)
+                if m and m.group(1) != pfr:
+                    player_stats[m.group(1)]["faced_cbet_flop"] += 1
+        for line in hand:
+            if "collected" in line:
+                m = re.match(r'"(.+?)" collected (\d+)', line)
+                if m:
+                    player_stats[m.group(1)]["winnings"] += int(m.group(2))
+    return player_stats
