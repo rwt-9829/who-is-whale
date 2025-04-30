@@ -150,11 +150,14 @@ def extract_stats(df):
             player_stats[name]["saw_turn_xx"] += 1
 
         for a in actions["TURN"]:
+            print(flop_aggro)
+            print(a)
+            print(pfr)
             if flop_aggro and f'"{flop_aggro}" bets' in a:
                 player_stats[flop_aggro]["turn_cbet"] += 1
             if pfr_checked_flop and pfr and f'"{pfr}" bets' in a:
                 player_stats[pfr]["turn_delay_cbet"] += 1
-            if "bets" in a and not f'"{pfr}" bets' in a:
+            if "bets" in a and not flop_aggro and not f'"{pfr}" bets' in a:
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
                     player_stats[m.group(1)]["probe_turn"] += 1
