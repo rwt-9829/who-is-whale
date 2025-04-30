@@ -113,7 +113,7 @@ def extract_stats(df):
                         player_stats[pfr]["cbet_flop"] += 1
             elif "checks" in a and pfr and a.startswith(f'"{pfr}"'):
                 pfr_checked_flop = True
-            elif "bets" in a and flop_aggro and flop_aggro != pfr:
+            elif "bets" in a and not a.startswith(f'"{pfr}"'):
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
                     player_stats[m.group(1)]["donk_flop"] += 1
@@ -146,8 +146,8 @@ def extract_stats(df):
                     player_stats[name]["saw_turn_fa"] += 1
                 elif name in pfc_set:
                     player_stats[name]["saw_turn_fc"] += 1
-                else:
-                    player_stats[name]["saw_turn_xx"] += 1
+        else:
+            player_stats[name]["saw_turn_xx"] += 1
 
         for a in actions["TURN"]:
             if flop_aggro and f'"{flop_aggro}" bets' in a:
