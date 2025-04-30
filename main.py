@@ -3,7 +3,7 @@ from app.visualization import show_winnings_chart
 from app.stats_display import show_player_stats
 from parser.log_parser import parse_log_file, extract_stats
 
-st.title("Poker Log Analyzer")
+st.title("PokerNow.Club Log Analyzer")
 
 uploaded_file = st.file_uploader("Upload Poker Log File", type=["csv"])
 if uploaded_file is not None:
