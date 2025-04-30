@@ -126,8 +126,8 @@ def extract_stats(df):
         net_result = {}
         for player in set(contributions.keys()).union(winnings.keys()):
             net = winnings[player] - contributions[player]
-            if net > 0:
-                net = 2 * net
+            #if net > 0:
+            #    net = 2 * net
             player_stats[player]["winnings"] += net
             net_result[player] = net
 
