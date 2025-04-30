@@ -73,6 +73,8 @@ def extract_stats(df):
                 if "calls" in move or "raises" in move:
                     player_stats[name]["vpip"] += 1
                 if "raises" in move:
+                    if pfr:
+                        player_stas[name]["pfr"] -= 1
                     pfr = name
                     player_stats[name]["pfr"] += 1
 
