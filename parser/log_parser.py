@@ -43,6 +43,8 @@ def extract_stats(df):
 
     player_stats = defaultdict(lambda: {
         "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
+        "3b": 0, "4b": 0, "5b": 0,
+        "vs_2b": 0, "vs_3b": 0, "vs_4b": 0,
         "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
         "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0,
         "saw_flop_pfr": 0, "saw_flop_pfc": 0,
@@ -71,6 +73,7 @@ def extract_stats(df):
         pfr_checked_flop = False
 
         # PREFLOP
+        raise_counts = 0
         for a in actions["PREFLOP"]:
             m = re.match(r'"(.+?)" (.+)', a)
             if m:
@@ -83,6 +86,26 @@ def extract_stats(df):
 
                 if "raises" in move:
                     pfr = name
+                    if raise_counts == 0:
+                        player_stats[name]["pfr"] += 1
+                        player_stats[name]["preflop_raiser"] += 1
+                        for other in players_in_hand:
+                            if other != name:
+                                player_stats[other]["vs_2b"] += 1
+                    elif raise_counts == 1:
+                        player_stats[name]["3b"] += 1
+                        for other in players_in_hand:
+                            if other != name:
+                                player_stats[other]["vs_3b"] += 1
+                    elif raise_counts == 2:
+                        player_stats[name]["4b"] += 1
+                        for other in players_in_hand:
+                            if other != name:
+                                player_stats[other]["vs_4b"] += 1
+                    elif raise_counts == 3:
+                        player_stats[name]["5b"] += 1
+                    
+                    raise_counts += 1
                 elif "calls" in move:
                     pfc_set.add(name)
 
