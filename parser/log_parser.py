@@ -42,10 +42,12 @@ def extract_stats(df):
     hands = extract_hands(entries)
 
     player_stats = defaultdict(lambda: {
-        "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
-        "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
-        "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0
+    "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
+    "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
+    "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0,
+    "saw_flop_pfr": 0
     })
+
     hand_winnings = []
     bb_size = 100
 
@@ -83,6 +85,9 @@ def extract_stats(df):
             m = re.match(r'"(.+?)" ', a)
             if m:
                 saw_flop.add(m.group(1))
+
+        if pfr and pfr in saw_flop:
+            player_stats[pfr]["saw_flop_pfr"] += 1
 
         # FLOP stats
         for a in actions["FLOP"]:
