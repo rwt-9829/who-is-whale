@@ -46,8 +46,8 @@ def extract_stats(df):
         "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
         "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0,
         "saw_flop_pfr": 0, "saw_flop_pfc": 0,
-        "turn_cbet": 0, "faced_turn_cbet": 0, "fold_to_cbet_turn": 0,
-        "x_r_turn": 0, "donk_turn": 0, "probe_turn": 0,
+        "turn_cbet": 0, "faced_turn_bet": 0, "fold_to_bet_turn": 0,
+        "r_turn": 0, "donk_turn": 0, "probe_turn": 0,
         "turn_delay_cbet": 0, "saw_turn_pfr": 0, "saw_turn_pfc": 0
     })
 
@@ -121,6 +121,7 @@ def extract_stats(df):
                 m = re.match(r'"(.+?)" raises', a)
                 if m:
                     player_stats[m.group(1)]["x_r_flop"] += 1
+                    flop_aggro = m.group(1)
             elif "folds" in a:
                 m = re.match(r'"(.+?)" folds', a)
                 if m:
@@ -150,28 +151,27 @@ def extract_stats(df):
                 player_stats[flop_aggro]["turn_cbet"] += 1
             if pfr_checked_flop and pfr and f'"{pfr}" bets' in a:
                 player_stats[pfr]["turn_delay_cbet"] += 1
-            if "bets" in a and flop_aggro and not a.startswith(f'"{flop_aggro}"'):
+            if "bets" in a and not flop_aggro and not f'"{pfr}" bets' in a:
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
                     player_stats[m.group(1)]["probe_turn"] += 1
-            if "bets" in a and not a.startswith(f'"{pfr}"'):
+            if "bets" in a and not a.startswith(f'"{flop_aggro}"') and not a.startswith(f'"{pfr}"'):
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
                     player_stats[m.group(1)]["donk_turn"] += 1
             if "raises" in a:
                 m = re.match(r'"(.+?)" raises', a)
                 if m:
-                    player_stats[m.group(1)]["x_r_turn"] += 1
+                    player_stats[m.group(1)]["r_turn"] += 1
             if "folds" in a:
                 m = re.match(r'"(.+?)" folds', a)
                 if m:
-                    player_stats[m.group(1)]["fold_to_cbet_turn"] += 1
+                    player_stats[m.group(1)]["fold_to_bet_turn"] += 1
             if any(x in a for x in ["bets", "calls", "folds"]):
                 m = re.match(r'"(.+?)" ', a)
                 if m:
                     name = m.group(1)
-                    if flop_aggro and name != flop_aggro:
-                        player_stats[name]["faced_turn_cbet"] += 1
+                    player_stats[name]["faced_turn_bet"] += 1
 
         # Contributions
         for street_actions in actions.values():
