@@ -42,10 +42,10 @@ def extract_stats(df):
     hands = extract_hands(entries)
 
     player_stats = defaultdict(lambda: {
-    "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
-    "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
-    "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0,
-    "saw_flop_pfr": 0
+        "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
+        "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
+        "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0,
+        "saw_flop_pfr": 0, "saw_flop_pfc": 0
     })
 
     hand_winnings = []
@@ -59,6 +59,7 @@ def extract_stats(df):
         saw_flop = set()
         vpip_players = set()
         pfr = None  # track the latest raiser preflop
+        pfc_set = set()
 
         # PREFLOP stats
         for a in actions["PREFLOP"]:
@@ -73,6 +74,8 @@ def extract_stats(df):
 
                 if "raises" in move:
                     pfr = name  # last preflop raiser
+                elif "calls" in move:
+                    pfc_set.add(name)
 
         for p in players_in_hand:
             player_stats[p]["hands"] += 1
@@ -88,6 +91,12 @@ def extract_stats(df):
 
         if pfr and pfr in saw_flop:
             player_stats[pfr]["saw_flop_pfr"] += 1
+
+        # Count saw_flop_pfc
+        for pfc in pfc_set:
+            if pfc in saw_flop:
+                player_stats[pfc]["saw_flop_pfc"] += 1
+
 
         # FLOP stats
         for a in actions["FLOP"]:
