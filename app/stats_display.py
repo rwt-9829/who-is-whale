@@ -25,5 +25,5 @@ def show_player_stats(player_stats):
         st.markdown("**FLOP STATS**")
         st.write(f"Flop CBet%: {cbet_flop:.2f}%")
         st.write(f"Flop Fold to CBet%: {fold_to_cbet:.2f}%")
-        st.write(f"Flop X/R%: {x_r_flop}")
-        st.write(f"Flop Donk%: {donk_flop}")
+        st.write(f"Flop X/R%: {x_r_flop:.2f}%")
+        st.write(f"Flop Donk%: {donk_flop:.2f}%")
