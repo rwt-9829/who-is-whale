@@ -48,7 +48,7 @@ def extract_stats(df):
         "saw_flop_pfr": 0, "saw_flop_pfc": 0,
         "turn_cbet": 0, "faced_turn_cbet": 0, "fold_to_cbet_turn": 0,
         "x_r_turn": 0, "donk_turn": 0, "probe_turn": 0,
-        "saw_turn_pfr": 0, "saw_turn_pfc": 0
+        "turn_delay_cbet": 0, "saw_turn_pfr": 0, "saw_turn_pfc": 0
     })
 
     hand_winnings = []
@@ -64,7 +64,8 @@ def extract_stats(df):
         vpip_players = set()
         pfr = None
         pfc_set = set()
-        flop_cbetted = False
+        flop_aggro = None
+        pfr_checked_flop = False
 
         # PREFLOP
         for a in actions["PREFLOP"]:
@@ -72,9 +73,11 @@ def extract_stats(df):
             if m:
                 name, move = m.groups()
                 players_in_hand.add(name)
+
                 if name not in vpip_players and ("calls" in move or "raises" in move):
                     player_stats[name]["vpip"] += 1
                     vpip_players.add(name)
+
                 if "raises" in move:
                     pfr = name
                 elif "calls" in move:
@@ -90,41 +93,51 @@ def extract_stats(df):
         for a in actions["FLOP"]:
             m = re.match(r'"(.+?)" ', a)
             if m:
-                saw_flop.add(m.group(1))
+                name = m.group(1)
+                saw_flop.add(name)
 
         if pfr and pfr in saw_flop:
             player_stats[pfr]["saw_flop_pfr"] += 1
-
         for pfc in pfc_set:
             if pfc in saw_flop:
                 player_stats[pfc]["saw_flop_pfc"] += 1
 
         for a in actions["FLOP"]:
-            if pfr and f'"{pfr}" bets' in a:
-                player_stats[pfr]["cbet_flop"] += 1
-                flop_cbetted = True
-            if "bets" in a and not a.startswith(f'"{pfr}"'):
+            if "bets" in a:
+                m = re.match(r'"(.+?)" bets', a)
+                if m:
+                    bettor = m.group(1)
+                    if flop_aggro is None:
+                        flop_aggro = bettor
+                    if pfr and bettor == pfr:
+                        player_stats[pfr]["cbet_flop"] += 1
+            elif "checks" in a and pfr and a.startswith(f'"{pfr}"'):
+                pfr_checked_flop = True
+            elif "bets" in a and flop_aggro and flop_aggro != pfr:
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
                     player_stats[m.group(1)]["donk_flop"] += 1
-            if "folds" in a:
-                m = re.match(r'"(.+?)" folds', a)
-                if m:
-                    player_stats[m.group(1)]["fold_to_cbet_flop"] += 1
-            if "raises" in a:
+            elif "raises" in a:
                 m = re.match(r'"(.+?)" raises', a)
                 if m:
                     player_stats[m.group(1)]["x_r_flop"] += 1
+            elif "folds" in a:
+                m = re.match(r'"(.+?)" folds', a)
+                if m:
+                    player_stats[m.group(1)]["fold_to_cbet_flop"] += 1
             if any(x in a for x in ["bets", "calls", "folds"]):
                 m = re.match(r'"(.+?)" ', a)
-                if m and m.group(1) != pfr:
-                    player_stats[m.group(1)]["faced_cbet_flop"] += 1
+                if m:
+                    name = m.group(1)
+                    if name != pfr:
+                        player_stats[name]["faced_cbet_flop"] += 1
 
         # TURN
         for a in actions["TURN"]:
             m = re.match(r'"(.+?)" ', a)
             if m:
-                saw_turn.add(m.group(1))
+                name = m.group(1)
+                saw_turn.add(name)
 
         if pfr and pfr in saw_turn:
             player_stats[pfr]["saw_turn_pfr"] += 1
@@ -132,37 +145,35 @@ def extract_stats(df):
             if pfc in saw_turn:
                 player_stats[pfc]["saw_turn_pfc"] += 1
 
-        pfr_cbets_turn = False
-        pfr_skipped_cbet = pfr and not flop_cbetted
-
         for a in actions["TURN"]:
-            if pfr and f'"{pfr}" bets' in a:
-                player_stats[pfr]["turn_cbet"] += 1
-                pfr_cbets_turn = True
+            if flop_aggro and f'"{flop_aggro}" bets' in a:
+                player_stats[flop_aggro]["turn_cbet"] += 1
+            if pfr_checked_flop and pfr and f'"{pfr}" bets' in a:
+                player_stats[pfr]["turn_delay_cbet"] += 1
+            if "bets" in a and flop_aggro and not a.startswith(f'"{flop_aggro}"'):
+                m = re.match(r'"(.+?)" bets', a)
+                if m:
+                    player_stats[m.group(1)]["probe_turn"] += 1
             if "bets" in a and not a.startswith(f'"{pfr}"'):
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
-                    name = m.group(1)
-                    if pfr_cbets_turn:
-                        player_stats[name]["faced_turn_cbet"] += 1
-                    if pfr_skipped_cbet:
-                        player_stats[name]["probe_turn"] += 1
-                    else:
-                        player_stats[name]["donk_turn"] += 1
-            if "folds" in a:
-                m = re.match(r'"(.+?)" folds', a)
-                if m and pfr_cbets_turn:
-                    player_stats[m.group(1)]["fold_to_cbet_turn"] += 1
+                    player_stats[m.group(1)]["donk_turn"] += 1
             if "raises" in a:
                 m = re.match(r'"(.+?)" raises', a)
                 if m:
                     player_stats[m.group(1)]["x_r_turn"] += 1
+            if "folds" in a:
+                m = re.match(r'"(.+?)" folds', a)
+                if m:
+                    player_stats[m.group(1)]["fold_to_cbet_turn"] += 1
             if any(x in a for x in ["bets", "calls", "folds"]):
                 m = re.match(r'"(.+?)" ', a)
-                if m and m.group(1) != pfr and pfr_cbets_turn:
-                    player_stats[m.group(1)]["faced_turn_cbet"] += 1
+                if m:
+                    name = m.group(1)
+                    if flop_aggro and name != flop_aggro:
+                        player_stats[name]["faced_turn_cbet"] += 1
 
-        # Track bets/contributions
+        # Contributions
         for street_actions in actions.values():
             cur_contrib = defaultdict(int)
             for line in street_actions:
