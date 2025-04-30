@@ -48,7 +48,10 @@ def extract_stats(df):
         "saw_flop_pfr": 0, "saw_flop_pfc": 0,
         "turn_cbet": 0, "faced_turn_bet": 0, "fold_to_bet_turn": 0,
         "r_turn": 0, "donk_turn": 0, "probe_turn": 0,
-        "turn_delay_cbet": 0, "saw_turn_fa": 0, "saw_turn_fc": 0, "saw_turn_xx": 0
+        "turn_delay_cbet": 0, "saw_turn_fa": 0, "saw_turn_fc": 0, "saw_turn_xx": 0,
+        "river_cbet": 0, "river_delay_cbet": 0, "donk_river": 0,
+        "probe_river": 0, "r_river": 0, "fold_to_bet_river": 0,
+        "faced_river_bet": 0, "saw_river_fa": 0, "saw_river_fc": 0, "saw_river_xx": 0,
     })
 
     hand_winnings = []
@@ -134,6 +137,7 @@ def extract_stats(df):
                         player_stats[name]["faced_cbet_flop"] += 1
 
         # TURN
+        turn_aggro = None
         for a in actions["TURN"]:
             m = re.match(r'"(.+?)" ', a)
             if m:
@@ -151,23 +155,26 @@ def extract_stats(df):
                 player_stats[name]["saw_turn_xx"] += 1
 
         for a in actions["TURN"]:
-            if flop_aggro and f'"{flop_aggro}" bets' in a:
-                player_stats[flop_aggro]["turn_cbet"] += 1
-            if pfr_checked_flop and pfr and f'"{pfr}" bets' in a:
-                player_stats[pfr]["turn_delay_cbet"] += 1
-            if "bets" in a and not flop_aggro and not f'"{pfr}" bets' in a:
+            if "bets" in a:
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
-                    player_stats[m.group(1)]["probe_turn"] += 1
-            if "bets" in a and not a.startswith(f'"{flop_aggro}"') and not a.startswith(f'"{pfr}"'):
-                m = re.match(r'"(.+?)" bets', a)
-                if m:
-                    player_stats[m.group(1)]["donk_turn"] += 1
-            if "raises" in a:
+                    bettor = m.group(1)
+                    if turn_aggro is None:
+                        turn_aggro = bettor
+                    if flop_aggro and bettor == flop_aggro:
+                        player_stats[flop_aggro]["turn_cbet"] += 1
+                    elif pfr_checked_flop and pfr and bettor == pfr:
+                        player_stats[pfr]["turn_delay_cbet"] += 1
+                    elif not flop_aggro and not pfr_checked_flop:
+                        player_stats[bettor]["probe_turn"] += 1
+                    elif bettor != flop_aggro and bettor != pfr:
+                        player_stats[bettor]["donk_turn"] += 1
+            elif "raises" in a:
                 m = re.match(r'"(.+?)" raises', a)
                 if m:
                     player_stats[m.group(1)]["r_turn"] += 1
-            if "folds" in a:
+                    turn_aggro = m.group(1)
+            elif "folds" in a:
                 m = re.match(r'"(.+?)" folds', a)
                 if m:
                     player_stats[m.group(1)]["fold_to_bet_turn"] += 1
@@ -176,6 +183,52 @@ def extract_stats(df):
                 if m:
                     name = m.group(1)
                     player_stats[name]["faced_turn_bet"] += 1
+
+        # RIVER
+        saw_river = set()
+        for a in actions["RIVER"]:
+            m = re.match(r'"(.+?)" ', a)
+            if m:
+                name = m.group(1)
+                saw_river.add(name)
+
+        if turn_aggro:
+            for name in saw_river:
+                if name == turn_aggro:
+                    player_stats[name]["saw_river_fa"] += 1
+                elif name in pfc_set:
+                    player_stats[name]["saw_river_fc"] += 1
+        else:
+            for name in saw_river:
+                player_stats[name]["saw_river_xx"] += 1
+
+        for a in actions["RIVER"]:
+            if "bets" in a:
+                m = re.match(r'"(.+?)" bets', a)
+                if m:
+                    bettor = m.group(1)
+                    if turn_aggro and bettor == turn_aggro:
+                        player_stats[bettor]["river_cbet"] += 1
+                    elif pfr_checked_flop and pfr and bettor == pfr:
+                        player_stats[pfr]["river_delay_cbet"] += 1
+                    elif not turn_aggro and not pfr_checked_flop:
+                        player_stats[bettor]["probe_river"] += 1
+                    elif bettor != turn_aggro and bettor != pfr:
+                        player_stats[bettor]["donk_river"] += 1
+            elif "raises" in a:
+                m = re.match(r'"(.+?)" raises', a)
+                if m:
+                    player_stats[m.group(1)]["r_river"] += 1
+            elif "folds" in a:
+                m = re.match(r'"(.+?)" folds', a)
+                if m:
+                    player_stats[m.group(1)]["fold_to_bet_river"] += 1
+            if "calls" in a or "folds" in a:
+                m = re.match(r'"(.+?)" ', a)
+                if m:
+                    name = m.group(1)
+                    player_stats[name]["faced_river_bet"] += 1
+
 
         # Contributions
         for street_actions in actions.values():
