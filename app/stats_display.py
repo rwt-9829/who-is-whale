@@ -20,7 +20,7 @@ def show_player_stats(player_stats):
         donk_flop = (stats["donk_flop"] / stats["saw_flop_pfc"] * 100) if stats["saw_flop_pfc"] else 0
 
         # Turn stats
-        cbet_turn = (stats["cbet_turn"] / stats["saw_turn_pfr"] * 100) if stats["saw_turn_pfr"] else 0
+        cbet_turn = (stats["turn_cbet"] / stats["saw_turn_pfr"] * 100) if stats["saw_turn_pfr"] else 0
         fold_to_cbet_turn = (stats["fold_to_cbet_turn"] / stats["faced_cbet_turn"] * 100) if stats["faced_cbet_turn"] else 0
         donk_turn = (stats["donk_turn"] / stats["saw_turn_pfc"] * 100) if stats["saw_turn_pfc"] else 0
         probe_turn = (stats["probe_turn"] / stats["saw_turn_pfc"] * 100) if stats["saw_turn_pfc"] else 0
