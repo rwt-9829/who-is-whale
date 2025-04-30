@@ -45,7 +45,10 @@ def extract_stats(df):
         "hands": 0, "winnings": 0, "vpip": 0, "pfr": 0,
         "preflop_raiser": 0, "cbet_flop": 0, "faced_cbet_flop": 0,
         "fold_to_cbet_flop": 0, "x_r_flop": 0, "donk_flop": 0,
-        "saw_flop_pfr": 0, "saw_flop_pfc": 0
+        "saw_flop_pfr": 0, "saw_flop_pfc": 0,
+        "turn_cbet": 0, "faced_turn_cbet": 0, "fold_to_cbet_turn": 0,
+        "x_r_turn": 0, "donk_turn": 0, "probe_turn": 0,
+        "saw_turn_pfr": 0, "saw_turn_pfc": 0
     })
 
     hand_winnings = []
@@ -57,23 +60,23 @@ def extract_stats(df):
         contributions = defaultdict(int)
         winnings = defaultdict(int)
         saw_flop = set()
+        saw_turn = set()
         vpip_players = set()
-        pfr = None  # track the latest raiser preflop
+        pfr = None
         pfc_set = set()
+        flop_cbetted = False
 
-        # PREFLOP stats
+        # PREFLOP
         for a in actions["PREFLOP"]:
             m = re.match(r'"(.+?)" (.+)', a)
             if m:
                 name, move = m.groups()
                 players_in_hand.add(name)
-
                 if name not in vpip_players and ("calls" in move or "raises" in move):
                     player_stats[name]["vpip"] += 1
                     vpip_players.add(name)
-
                 if "raises" in move:
-                    pfr = name  # last preflop raiser
+                    pfr = name
                 elif "calls" in move:
                     pfc_set.add(name)
 
@@ -83,7 +86,7 @@ def extract_stats(df):
             player_stats[pfr]["pfr"] += 1
             player_stats[pfr]["preflop_raiser"] += 1
 
-        # Detect who saw the flop
+        # FLOP
         for a in actions["FLOP"]:
             m = re.match(r'"(.+?)" ', a)
             if m:
@@ -92,16 +95,14 @@ def extract_stats(df):
         if pfr and pfr in saw_flop:
             player_stats[pfr]["saw_flop_pfr"] += 1
 
-        # Count saw_flop_pfc
         for pfc in pfc_set:
             if pfc in saw_flop:
                 player_stats[pfc]["saw_flop_pfc"] += 1
 
-
-        # FLOP stats
         for a in actions["FLOP"]:
-            if pfr and f'"{pfr}" bets' in a and pfr in saw_flop:
+            if pfr and f'"{pfr}" bets' in a:
                 player_stats[pfr]["cbet_flop"] += 1
+                flop_cbetted = True
             if "bets" in a and not a.startswith(f'"{pfr}"'):
                 m = re.match(r'"(.+?)" bets', a)
                 if m:
@@ -116,10 +117,50 @@ def extract_stats(df):
                     player_stats[m.group(1)]["x_r_flop"] += 1
             if any(x in a for x in ["bets", "calls", "folds"]):
                 m = re.match(r'"(.+?)" ', a)
+                if m and m.group(1) != pfr:
+                    player_stats[m.group(1)]["faced_cbet_flop"] += 1
+
+        # TURN
+        for a in actions["TURN"]:
+            m = re.match(r'"(.+?)" ', a)
+            if m:
+                saw_turn.add(m.group(1))
+
+        if pfr and pfr in saw_turn:
+            player_stats[pfr]["saw_turn_pfr"] += 1
+        for pfc in pfc_set:
+            if pfc in saw_turn:
+                player_stats[pfc]["saw_turn_pfc"] += 1
+
+        pfr_cbets_turn = False
+        pfr_skipped_cbet = pfr and not flop_cbetted
+
+        for a in actions["TURN"]:
+            if pfr and f'"{pfr}" bets' in a:
+                player_stats[pfr]["turn_cbet"] += 1
+                pfr_cbets_turn = True
+            if "bets" in a and not a.startswith(f'"{pfr}"'):
+                m = re.match(r'"(.+?)" bets', a)
                 if m:
                     name = m.group(1)
-                    if name != pfr:
-                        player_stats[name]["faced_cbet_flop"] += 1
+                    if pfr_cbets_turn:
+                        player_stats[name]["faced_turn_cbet"] += 1
+                    if pfr_skipped_cbet:
+                        player_stats[name]["probe_turn"] += 1
+                    else:
+                        player_stats[name]["donk_turn"] += 1
+            if "folds" in a:
+                m = re.match(r'"(.+?)" folds', a)
+                if m and pfr_cbets_turn:
+                    player_stats[m.group(1)]["fold_to_cbet_turn"] += 1
+            if "raises" in a:
+                m = re.match(r'"(.+?)" raises', a)
+                if m:
+                    player_stats[m.group(1)]["x_r_turn"] += 1
+            if any(x in a for x in ["bets", "calls", "folds"]):
+                m = re.match(r'"(.+?)" ', a)
+                if m and m.group(1) != pfr and pfr_cbets_turn:
+                    player_stats[m.group(1)]["faced_turn_cbet"] += 1
 
         # Track bets/contributions
         for street_actions in actions.values():
@@ -148,8 +189,6 @@ def extract_stats(df):
         net_result = {}
         for player in set(contributions.keys()).union(winnings.keys()):
             net = winnings[player] - contributions[player]
-            #if net > 0:
-            #    net = 2 * net
             player_stats[player]["winnings"] += net
             net_result[player] = net
 
