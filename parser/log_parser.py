@@ -58,17 +58,6 @@ def extract_stats(df):
         vpip_players = set()
         pfr = None  # track the latest raiser preflop
 
-        # Track bets/contributions
-        for street_actions in actions.values():
-            cur_contrib = defaultdict(int)
-            for line in street_actions:
-                m = re.match(r'"(.+?)" (bets|calls|raises|posts small blind|posts big blind)(.*?)(\d+)', line)
-                if m:
-                    name, _, _, amount = m.groups()
-                    cur_contrib[name] = int(amount)
-            for name, contrib in cur_contrib:
-                contributions[name] += contrib
-
         # PREFLOP stats
         for a in actions["PREFLOP"]:
             m = re.match(r'"(.+?)" (.+)', a)
@@ -117,6 +106,17 @@ def extract_stats(df):
                     name = m.group(1)
                     if name != pfr:
                         player_stats[name]["faced_cbet_flop"] += 1
+
+        # Track bets/contributions
+        for street_actions in actions.values():
+            cur_contrib = defaultdict(int)
+            for line in street_actions:
+                m = re.match(r'"(.+?)" (bets|calls|raises|posts small blind|posts big blind)(.*?)(\d+)', line)
+                if m:
+                    name, _, _, amount = m.groups()
+                    cur_contrib[name] = int(amount)
+            for name in players_in_hand:
+                contributions[name] += cur_contrib[name]
 
         # WINNINGS
         for line in hand:
