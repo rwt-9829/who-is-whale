@@ -122,6 +122,11 @@ def extract_stats(df):
                 if m:
                     name, amount = m.groups()
                     winnings[name] += int(amount)
+            elif "Uncalled bet of" in line:
+                m = re.match(r'Uncalled bet of (\d+) returned to "(.+?)"', line)
+                if m:
+                    amount, name = m.groups()
+                    winnings[name] += int(amount)
 
         net_result = {}
         for player in set(contributions.keys()).union(winnings.keys()):
