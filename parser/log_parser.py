@@ -171,7 +171,7 @@ def extract_stats(df):
                 m = re.match(r'"(.+?)" folds', a)
                 if m:
                     player_stats[m.group(1)]["fold_to_bet_turn"] += 1
-            if any(x in a for x in ["bets", "calls", "folds"]):
+            if "calls" in a or "folds" in a:
                 m = re.match(r'"(.+?)" ', a)
                 if m:
                     name = m.group(1)
