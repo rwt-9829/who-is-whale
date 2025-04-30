@@ -20,6 +20,7 @@ def show_player_stats(player_stats):
     p3b = round((stats["3b"] / stats["vs_2b"] * 100), 2) if stats["vs_2b"] else 0
     p4b = round((stats["4b"] / stats["vs_3b"] * 100), 2) if stats["vs_3b"] else 0
     p5b = round((stats["5b"] / stats["vs_4b"] * 100), 2) if stats["vs_4b"] else 0
+    af = round(stats["aggression_factor"], 2)
     bb_per_100 = round((winnings / (hands * bb_size) * 100), 2) if hands else 0
 
     # Flop
@@ -49,8 +50,8 @@ def show_player_stats(player_stats):
     # BASIC TABLE
     st.markdown("**Basic Stats**")
     st.table({
-        "Stat": ["Hands", "Winnings", "BB/100", "VPIP %", "PFR %", "3Bet%", "4Bet%", "5Bet%"],
-        "Value": [hands, winnings, f"{bb_per_100:.2f}", f"{vpip:.2f}", f"{pfr:.2f}", f"{p3b:.2f}", f"{p4b:.2f}", f"{p5b:.2f}"]
+        "Stat": ["Hands", "Winnings", "BB/100", "VPIP %", "PFR %", "3Bet%", "4Bet%", "5Bet%", "Aggression Factor"],
+        "Value": [hands, winnings, f"{bb_per_100:.2f}", f"{vpip:.2f}", f"{pfr:.2f}", f"{p3b:.2f}", f"{p4b:.2f}", f"{p5b:.2f}", f"{af:.2f}"]
     })
 
     # FLOP TABLE

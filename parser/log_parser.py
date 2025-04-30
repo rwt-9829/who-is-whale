@@ -54,6 +54,7 @@ def extract_stats(df):
         "river_cbet": 0, "river_delay_cbet": 0, "donk_river": 0,
         "probe_river": 0, "r_river": 0, "fold_to_bet_river": 0,
         "faced_river_bet": 0, "saw_river_fa": 0, "saw_river_fc": 0, "saw_river_xx": 0,
+        "aggressive_actions": 0, "passive_actions": 0, "aggression_factor": 0,
     })
 
     hand_winnings = []
@@ -114,6 +115,21 @@ def extract_stats(df):
         if pfr:
             player_stats[pfr]["pfr"] += 1
             player_stats[pfr]["preflop_raiser"] += 1
+
+        # accumulating stats for AF
+        for street in ["PREFLOP", "FLOP", "TURN", "RIVER"]:
+            for a in actions[street]:
+                m = re.match(r'"(.+?)" (bets|raises|calls|checks)', a)
+                if m:
+                    name, move = m.groups()
+                    if "bets" in move or "raises" in move:
+                        player_stats[name]["aggressive_actions"] += 1
+                    elif "calls" in move or "checks" in move:
+                        player_stats[name]["passive_actions"] += 1
+
+        # AF calc
+        for player in player_stats:
+            player_stats[player]["aggression_factor"] = player_stats[player]["aggressive_actions"] / player_stats[player]["passive_actions"]
 
         # FLOP
         for a in actions["FLOP"]:
