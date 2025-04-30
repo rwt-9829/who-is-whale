@@ -111,7 +111,7 @@ def extract_stats(df):
         for street_actions in actions.values():
             cur_contrib = defaultdict(int)
             for line in street_actions:
-                m = re.match(r'"(.+?)" (bets|calls|raises|posts small blind|posts big blind)(.*?)(\d+)', line)
+                m = re.match(r'"(.+?)" (bets|calls|raises|posts a small blind|posts a big blind)(.*?)(\d+)', line)
                 if m:
                     name, _, _, amount = m.groups()
                     cur_contrib[name] = int(amount)
