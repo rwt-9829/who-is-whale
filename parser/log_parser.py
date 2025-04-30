@@ -147,12 +147,10 @@ def extract_stats(df):
                 elif name in pfc_set:
                     player_stats[name]["saw_turn_fc"] += 1
         else:
-            player_stats[name]["saw_turn_xx"] += 1
+            for name in saw_turn:
+                player_stats[name]["saw_turn_xx"] += 1
 
         for a in actions["TURN"]:
-            print(flop_aggro)
-            print(a)
-            print(pfr)
             if flop_aggro and f'"{flop_aggro}" bets' in a:
                 player_stats[flop_aggro]["turn_cbet"] += 1
             if pfr_checked_flop and pfr and f'"{pfr}" bets' in a:
