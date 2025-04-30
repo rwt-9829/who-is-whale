@@ -21,14 +21,17 @@ def show_player_stats(player_stats):
         r_turn = (stats["r_turn"] / stats["saw_turn_pfc"] * 100) if stats["saw_turn_pfc"] else 0
 
         st.subheader(f"Player: {name}")
+        st.header(f"Basic Stats")
         st.write(f"Hands Played: {hands}")
         st.write(f"Winnings: {winnings}")
         st.write(f"BB/100: {bb_per_100:.2f}")
         st.write(f"VPIP: {vpip:.2f}%")
         st.write(f"PFR: {pfr:.2f}%")
+        st.header(f"Flop Stats")
         st.write(f"C-bet Flop: {cbet_flop:.2f}%")
         st.write(f"Fold to Flop C-bet: {fold_to_cbet:.2f}%")
         st.write(f"Check-Raise Flop: {x_r_flop:.2f}%")
+        st.header(f"Turn Stats")
         st.write(f"Donk Bet Flop: {donk_flop:.2f}%")
         st.write(f"Donk Bet Turn: {donk_turn:.2f}%")
         st.write(f"Probe Bet Turn: {probe_turn:.2f}%")
