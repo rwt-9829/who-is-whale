@@ -16,10 +16,10 @@ def show_player_stats(player_stats):
         x_r_flop = (stats["x_r_flop"] / stats["saw_flop_pfc"] * 100) if stats["saw_flop_pfc"] else 0
         donk_flop = (stats["donk_flop"] / stats["saw_flop_pfc"] * 100) if stats["saw_flop_pfc"] else 0
         # turn
-        turn_cbet = (stats["turn_cbet"] / stats["saw_turn_pfr"] * 100) if stats["saw_turn_pfr"] else 0
-        turn_delay_cbet = (stats["turn_delay_cbet"] / stats["saw_turn_pfr"] * 100) if stats["saw_turn_pfr"] else 0
-        probe_turn = (stats["probe_turn"] / stats["saw_turn_pfc"] * 100) if stats["saw_turn_pfc"] else 0
-        donk_turn = (stats["donk_turn"] / stats["saw_turn_pfc"] * 100) if stats["saw_turn_pfc"] else 0
+        turn_cbet = (stats["turn_cbet"] / stats["saw_turn_fa"] * 100) if stats["saw_turn_fa"] else 0
+        turn_delay_cbet = (stats["turn_delay_cbet"] / stats["saw_turn_xx"] * 100) if stats["saw_turn_xx"] else 0
+        probe_turn = (stats["probe_turn"] / stats["saw_turn_xx"] * 100) if stats["saw_turn_xx"] else 0
+        donk_turn = (stats["donk_turn"] / stats["saw_turn_fc"] * 100) if stats["saw_turn_fc"] else 0
         r_turn = (stats["r_turn"] / stats["faced_turn_bet"] * 100) if stats["faced_turn_bet"] else 0
         fold_to_bet_turn = (stats["fold_to_bet_turn"] / stats["faced_turn_bet"] * 100) if stats["faced_turn_bet"] else 0
         

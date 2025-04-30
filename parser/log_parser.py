@@ -48,7 +48,7 @@ def extract_stats(df):
         "saw_flop_pfr": 0, "saw_flop_pfc": 0,
         "turn_cbet": 0, "faced_turn_bet": 0, "fold_to_bet_turn": 0,
         "r_turn": 0, "donk_turn": 0, "probe_turn": 0,
-        "turn_delay_cbet": 0, "saw_turn_pfr": 0, "saw_turn_pfc": 0
+        "turn_delay_cbet": 0, "saw_turn_fa": 0, "saw_turn_fc": 0, "saw_turn_xx": 0
     })
 
     hand_winnings = []
@@ -140,11 +140,14 @@ def extract_stats(df):
                 name = m.group(1)
                 saw_turn.add(name)
 
-        if pfr and pfr in saw_turn:
-            player_stats[pfr]["saw_turn_pfr"] += 1
-        for pfc in pfc_set:
-            if pfc in saw_turn:
-                player_stats[pfc]["saw_turn_pfc"] += 1
+        if flop_aggro:
+            for name in saw_turn:
+                if name == flop_aggro:
+                    player_stats[name]["saw_turn_fa"] += 1
+                elif name in pfc_set:
+                    player_stats[name]["saw_turn_fc"] += 1
+                else:
+                    player_stats[name]["saw_turn_xx"] += 1
 
         for a in actions["TURN"]:
             if flop_aggro and f'"{flop_aggro}" bets' in a:
