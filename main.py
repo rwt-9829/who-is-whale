@@ -4,9 +4,6 @@ from app.stats_display import show_player_stats
 from parser.log_parser import parse_log_file, extract_stats
 
 st.set_page_config(page_title="Poker Hand History Analyzer")
-st.html(
-    '<meta name="google-site-verification" content="ofFL2OsTyaWtskAzYjg1Z5nvqIjSjT6kkyj9zw35CqA" />'
-)
 #st.title("PokerNow.Club Log Analysis")
 st.header("Poker Hand History Analyzer")
 st.text("Analyze online poker logs to extract detailed player behavior statistics, including c-bets, donk bets, probes, and fold frequencies at each street. Ideal for improving strategy and gaining insights from historical hands.")
