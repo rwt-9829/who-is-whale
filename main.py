@@ -3,6 +3,9 @@ from app.visualization import show_winnings_chart
 from app.stats_display import show_player_stats
 from parser.log_parser import parse_log_file, extract_stats
 
+st.html(
+    '<meta name="google-site-verification" content="ofFL2OsTyaWtskAzYjg1Z5nvqIjSjT6kkyj9zw35CqA" />'
+)
 st.set_page_config(page_title="Poker Hand History Analyzer")
 #st.title("PokerNow.Club Log Analysis")
 st.header("Poker Hand History Analyzer")
