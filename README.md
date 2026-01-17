@@ -1,3 +1,5 @@
+# CURRENTLY DYSFUNCTIONAL
+
 # who-is-whale.streamlit.app
 PokerNow.Club Log Analyzer
 
